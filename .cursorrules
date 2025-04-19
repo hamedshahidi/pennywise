@@ -1,0 +1,41 @@
+# Pennywise Project Rules
+
+# Command Line Rules
+- Use PowerShell's semicolon (;) for command separation, not &&
+- Example: git checkout main; git pull
+- Always use explicit paths relative to workspace root
+
+# Git Rules
+- Branch naming: feature/<issue-number>-<description>
+- Commit format: <type>(<scope>): <description> (#<issue-number>)
+- Types: feat, fix, chore, docs, style, refactor, test
+- Always include issue number in commits and PRs
+- PR title should match commit message
+
+# Code Style
+- Python: Use Google-style docstrings
+- Python: 88 character line length (Black formatter)
+- Python: Double quotes for strings
+- Python: 4 spaces indentation
+- Keep functions focused and small
+- Add type hints to function parameters
+
+# Project Structure
+/src
+  /data_import      # Data import and processing
+  /categorization   # Transaction categorization
+/data
+  /examples         # Example data files
+  /processed        # Processed data files
+/tests             # Test files
+
+# Security Rules
+- No credentials in code
+- Use .env for environment variables
+- .env is never committed to git
+- Example files must use dummy data
+
+# Documentation
+- README.md in each directory
+- Clear function/class documentation
+- Example usage in docstrings 
