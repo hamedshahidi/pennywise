@@ -1,0 +1,7 @@
+README.md
+setup.py
+pennywise.egg-info/PKG-INFO
+pennywise.egg-info/SOURCES.txt
+pennywise.egg-info/dependency_links.txt
+pennywise.egg-info/requires.txt
+pennywise.egg-info/top_level.txt
