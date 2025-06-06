@@ -20,3 +20,6 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Private config
+src/config/initial_balances.yaml

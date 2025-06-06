@@ -1,0 +1,10 @@
+# Example initial account balances for each person
+# Copy this file to initial_balances.yaml and replace the values with real starting balances
+
+alice:
+  nordea-checking: 0.0
+  nordea-savings: 0.0
+
+bob:
+  op-main: 0.0
+  op-savings: 0.0
