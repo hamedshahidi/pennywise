@@ -4,7 +4,7 @@ Example script demonstrating how to process monthly expenses using PennyWise.
 from pathlib import Path
 from datetime import datetime
 from src.data_import.bank_report import import_bank_report
-from src.categorization.transaction_categories import categorize_transactions
+from core.categorization import categorize_transactions
 from src.core.calculations import Person, Contribution, BalanceSheet
 
 
