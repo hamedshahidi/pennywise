@@ -1,36 +1,18 @@
 """
 Multi-month and multi-account expense processor for PennyWise.
-
-Reads all CSV files in the data directory, parses metadata from filenames,
-groups transactions by month, and processes each using the existing fairness logic.
-
-Responsibilities:
-- Validate and parse filename structure: <person>_<account>_YYYY_MM.csv
-- Detect and warn on unrecognized filenames
-- Aggregate income and expenses by person and month
-- Run fair-share calculation per month and collect summary results
-
-This module powers the full-period financial analysis across multiple months.
-
-Dependencies:
-- core.calculations (Person, Contribution, FairShareCalculator)
-- core.balancesheet (BalanceSheet)
-- data_import.bank_report (BankReport)
-- data_import.filename_parser (parse_filename)
 """
 
-"""
-Multi-month and multi-account expense processor for PennyWise.
-"""
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import os
 from collections import defaultdict
-from pathlib import Path
-
 import pandas as pd
 
 from data_import.filename_parser import parse_filename
-from data_import.bank_report import BankReport
+from data_import.bank_report import import_bank_report
+from core.categorization import categorize_transactions
 from core.calculations import Person, Contribution
 from core.balancesheet import BalanceSheet
 
@@ -41,7 +23,6 @@ def process_all_months(data_dir: str = "data/statements/"):
 
     # Step 2: Group files by year_month
     month_groups = defaultdict(list)
-
     for file in all_files:
         metadata = parse_filename(file)
         if not metadata:
@@ -56,7 +37,6 @@ def process_all_months(data_dir: str = "data/statements/"):
         print(f"\n📅 Processing month: {year_month}")
 
         people: dict[str, Person] = {}
-
         for meta in files:
             name = meta["person"]
             if name not in people:
@@ -73,21 +53,38 @@ def process_all_months(data_dir: str = "data/statements/"):
 
         for meta in files:
             name = meta["person"]
-            df = BankReport.read_csv(meta["filepath"])
+            income_df, expenses_df = import_bank_report(meta["filepath"])
+            people[name].monthly_income += income_df["amount"].sum()
 
-            for _, row in df.iterrows():
-                amount = row["amount"]
-                category = row["category"]
-
-                if amount > 0:
-                    people[name].monthly_income += amount
-                else:
-                    contribution.add_expense(
-                        category=category,
-                        amount=-amount,
-                        paid_by=name,
-                        is_shared=True
-                    )
+            categorized_expenses = categorize_transactions(expenses_df)
+            for _, row in categorized_expenses.iterrows():
+                contribution.add_expense(
+                    category=row["category"],
+                    amount=row["amount"],
+                    paid_by=name,
+                    is_shared=True
+                )
 
         result = BalanceSheet.generate_monthly_balance(contribution)
         print(result["summary"])
+
+        a = result["person_a"]
+        b = result["person_b"]
+        ir = result["income_ratios"]
+        pr = result["paid_ratios"]
+
+        print(f"--- {a['name']} ---")
+        print(f"  Income:            €{a['income']:.2f}  ({ir['person_a'] * 100:.2f}% of household income)")
+        print(f"  Shared Paid:       €{a['actual_paid']:.2f}  ({pr['person_a'] * 100:.2f}% of shared expenses)")
+        print(f"  Fair Contribution: €{a['fair_share']:.2f}")
+        print(f"  Adjustment:        €{a['balance']:+.2f}\n")
+
+        print(f"--- {b['name']} ---")
+        print(f"  Income:            €{b['income']:.2f}  ({ir['person_b'] * 100:.2f}% of household income)")
+        print(f"  Shared Paid:       €{b['actual_paid']:.2f}  ({pr['person_b'] * 100:.2f}% of shared expenses)")
+        print(f"  Fair Contribution: €{b['fair_share']:.2f}")
+        print(f"  Adjustment:        €{b['balance']:+.2f}")
+
+
+if __name__ == "__main__":
+    process_all_months("data/statements/")
